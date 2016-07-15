@@ -42,6 +42,7 @@
 
 #include "pcap.h"
 #include "packetparser.h"
+#include <time.h>
 
 /* 4 bytes IP address */
 typedef struct ip_address
@@ -90,14 +91,14 @@ int main()
     pcap_t *adhandle;
     char errbuf[PCAP_ERRBUF_SIZE];
     u_int netmask;
-    char packet_filter[] = "tcp or udp";
+    char packet_filter[64] = "port 80";
     struct bpf_program fcode;
 
     /* Retrieve the device list */
     if(pcap_findalldevs(&alldevs, errbuf) == -1)
     {
         fprintf(stderr,"Error in pcap_findalldevs: %s\n", errbuf);
-        exit(1);
+        return 1;
     }
 
     /* Print the list */
@@ -129,6 +130,7 @@ int main()
         return -1;
     }
 
+
     /* Jump to the selected adapter */
     for(d=alldevs, i=0; i< inum-1 ;d=d->next, i++);
 
@@ -141,11 +143,13 @@ int main()
                              errbuf			// error buffer
                              )) == NULL)
     {
-        fprintf(stderr,"\nUnable to open the adapter. %s is not supported by WinPcap\n");
+        fprintf(stderr,"\nUnable to open the adapter. is not supported by WinPcap\n");
         /* Free the device list */
         pcap_freealldevs(alldevs);
         return -1;
     }
+
+
 
     /* Check the link layer. We support only Ethernet for simplicity. */
     if(pcap_datalink(adhandle) != DLT_EN10MB)
@@ -156,16 +160,31 @@ int main()
         return -1;
     }
 
+
     if(d->addresses != NULL)
+    {
         /* Retrieve the mask of the first address of the interface */
+#ifdef WIN32
         netmask=((struct sockaddr_in *)(d->addresses->netmask))->sin_addr.S_un.S_addr;
+#else
+        netmask=((struct sockaddr_in *)(d->addresses->netmask))->sin_addr.s_addr;
+#endif
+        printf("netmask set\n");
+    }
     else
+    {
         /* If the interface is without addresses we suppose to be in a C class network */
         netmask=0xffffff;
+        printf("netmask error\n");
+    }
 
 
     //compile the filter
+#ifdef WIN32
     if (pcap_compile(adhandle, &fcode, packet_filter, 1, netmask) <0 )
+#else
+    if (pcap_compile(adhandle, &fcode, packet_filter, 0, netmask) <0 )
+#endif
     {
         fprintf(stderr,"\nUnable to compile the packet filter. Check the syntax.\n");
         /* Free the device list */
@@ -173,10 +192,15 @@ int main()
         return -1;
     }
 
+    printf("compiling...\n");
+    return 0;
+
+
     //set the filter
     if (pcap_setfilter(adhandle, &fcode)<0)
     {
         fprintf(stderr,"\nError setting the filter.\n");
+        printf("\nError setting the filter.\n");
         /* Free the device list */
         pcap_freealldevs(alldevs);
         return -1;
@@ -190,6 +214,7 @@ int main()
     /* start the capture */
     pcap_loop(adhandle, 0, packet_handler, NULL);
 
+    printf("loop terminated\n");
     return 0;
 }
 
@@ -211,7 +236,7 @@ void packet_handler(u_char *param, const struct pcap_pkthdr *header, const u_cha
     /*
      * unused parameter
      */
-    (VOID)(param);
+    (void)(param);
 
     /* convert the timestamp to readable format */
     local_tv_sec = header->ts.tv_sec;
@@ -234,7 +259,7 @@ void packet_handler(u_char *param, const struct pcap_pkthdr *header, const u_cha
 
         src=ipInformation->getSourceAddressAsString();
         dst=ipInformation->getDestinationAddressAsString();
-        printf("IPv%d %s to %s (data len : %lld)\n",
+        printf("IPv%d %s to %s (data len : %llu)\n",
                ipInformation->getVersion(), src, dst, ipInformation->getLength());
         delete[] src;
         delete[] dst;
@@ -267,7 +292,7 @@ void packet_handler(u_char *param, const struct pcap_pkthdr *header, const u_cha
     }
     printf("\n");
 
-    if(FALSE){
+    if(1==0){
         /* retireve the position of the ip header */
         ih = (ip_header *) (pkt_data +
             14); //length of ethernet header

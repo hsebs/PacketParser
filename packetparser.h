@@ -1,19 +1,23 @@
 #ifndef PACKETPARSER_H
 #define PACKETPARSER_H
 
+#ifdef WIN32
+#include<WinSock2.h>
 #include"libnet/in_systm.h"
+#else
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <sys/types.h>
+typedef u_int32_t n_time;
+#endif
+
 #include"libnet/libnet-types.h"
 #include"libnet/libnet-macros.h"
 #include"libnet/libnet-structures.h"
 #include"libnet/libnet-headers.h"
 #include"libnet/libnet-functions.h"
-#ifdef WIN32
-#include<WinSock2.h>
-#else
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#endif
+#include <string.h>
 
 class Protocol_Parser
 {
@@ -30,10 +34,11 @@ public :
 
 class TCP_Parser : public Protocol_Parser
 {
+private:
     libnet_tcp_hdr* tcpHeader;
-    u_int64 size;
+    u_int64_t size;
 public :
-    TCP_Parser(const u_int8_t* data, u_int64 size)
+    TCP_Parser(const u_int8_t* data, u_int64_t size)
     {
         tcpHeader=(libnet_tcp_hdr*)new char[size];
         memcpy(tcpHeader,data,size);
@@ -221,7 +226,11 @@ public :
         {
         case 4:
             buffer=new char[20];
+#ifdef WIN32
             sprintf(buffer,"%d.%d.%d.%d",ipv4Header->ip_dst.S_un.S_un_b.s_b1,ipv4Header->ip_dst.S_un.S_un_b.s_b2,ipv4Header->ip_dst.S_un.S_un_b.s_b3,ipv4Header->ip_dst.S_un.S_un_b.s_b4);
+#else
+            sprintf(buffer,"%d.%d.%d.%d",((char*)&ipv4Header->ip_dst.s_addr)[0],((char*)&ipv4Header->ip_dst.s_addr)[1],((char*)&ipv4Header->ip_dst.s_addr)[2],((char*)&ipv4Header->ip_dst.s_addr)[3]);
+#endif
             break;
         case 6:
             buffer=new char[50];
@@ -240,7 +249,11 @@ public :
         {
         case 4:
             buffer=new char[20];
+#ifdef WIN32
             sprintf(buffer,"%d.%d.%d.%d",ipv4Header->ip_src.S_un.S_un_b.s_b1,ipv4Header->ip_src.S_un.S_un_b.s_b2,ipv4Header->ip_src.S_un.S_un_b.s_b3,ipv4Header->ip_src.S_un.S_un_b.s_b4);
+#else
+            sprintf(buffer,"%d.%d.%d.%d",((char*)&ipv4Header->ip_src.s_addr)[0],((char*)&ipv4Header->ip_src.s_addr)[1],((char*)&ipv4Header->ip_src.s_addr)[2],((char*)&ipv4Header->ip_src.s_addr)[3]);
+#endif
             break;
         case 6:
             buffer=new char[50];
