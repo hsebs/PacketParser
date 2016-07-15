@@ -91,7 +91,8 @@ int main()
     pcap_t *adhandle;
     char errbuf[PCAP_ERRBUF_SIZE];
     u_int netmask;
-    char packet_filter[64] = "port 80";
+    char packet_filter[] = "tcp";
+                           //"tcp or udp";
     struct bpf_program fcode;
 
     /* Retrieve the device list */
@@ -192,9 +193,6 @@ int main()
         return -1;
     }
 
-    printf("compiling...\n");
-    return 0;
-
 
     //set the filter
     if (pcap_setfilter(adhandle, &fcode)<0)
@@ -270,7 +268,7 @@ void packet_handler(u_char *param, const struct pcap_pkthdr *header, const u_cha
             tcpInformation=ipInformation->getTCP();
             src=tcpInformation->getSourceAddressAsString();
             dst=tcpInformation->getDestinationAddressAsString();
-            printf("TCP Port %s to Port %s (data len : %d)\n",src,dst,tcpInformation->getDataLength());
+            printf("TCP Port %s to Port %s (data len : %lld)\n",src,dst,tcpInformation->getDataLength());
             delete[] src;
             delete[] dst;
             delete tcpInformation;
@@ -279,7 +277,7 @@ void packet_handler(u_char *param, const struct pcap_pkthdr *header, const u_cha
             udpInformation=ipInformation->getUDP();
             src=udpInformation->getSourceAddressAsString();
             dst=udpInformation->getDestinationAddressAsString();
-            printf("UDP Port %s to Port %s (data len : %d)\n",src,dst,udpInformation->getDataLength());
+            printf("UDP Port %s to Port %s (data len : %lld)\n",src,dst,udpInformation->getDataLength());
             delete[] src;
             delete[] dst;
             delete udpInformation;
