@@ -44,39 +44,6 @@
 #include "packetparser.h"
 #include <time.h>
 
-/* 4 bytes IP address */
-typedef struct ip_address
-{
-    u_char byte1;
-    u_char byte2;
-    u_char byte3;
-    u_char byte4;
-}ip_address;
-
-/* IPv4 header */
-typedef struct ip_header
-{
-    u_char	ver_ihl;		// Version (4 bits) + Internet header length (4 bits)
-    u_char	tos;			// Type of service
-    u_short tlen;			// Total length
-    u_short identification; // Identification
-    u_short flags_fo;		// Flags (3 bits) + Fragment offset (13 bits)
-    u_char	ttl;			// Time to live
-    u_char	proto;			// Protocol
-    u_short crc;			// Header checksum
-    ip_address	saddr;		// Source address
-    ip_address	daddr;		// Destination address
-    u_int	op_pad;			// Option + Padding
-}ip_header;
-
-/* UDP header*/
-typedef struct udp_header
-{
-    u_short sport;			// Source port
-    u_short dport;			// Destination port
-    u_short len;			// Datagram length
-    u_short crc;			// Checksum
-}udp_header;
 
 /* prototype of the packet handler */
 void packet_handler(u_char *param, const struct pcap_pkthdr *header, const u_char *pkt_data);
@@ -165,12 +132,20 @@ int main()
     if(d->addresses != NULL)
     {
         /* Retrieve the mask of the first address of the interface */
+        if(d->addresses->netmask)
+        {
 #ifdef WIN32
-        netmask=((struct sockaddr_in *)(d->addresses->netmask))->sin_addr.S_un.S_addr;
+            netmask=((struct sockaddr_in *)(d->addresses->netmask))->sin_addr.S_un.S_addr;
 #else
-        netmask=((struct sockaddr_in *)(d->addresses->netmask))->sin_addr.s_addr;
+            netmask=((struct sockaddr_in *)(d->addresses->netmask))->sin_addr.s_addr;
 #endif
-        printf("netmask set\n");
+            printf("netmask set\n");
+        }
+        else
+        {
+            netmask=0xffffff;
+            printf("netmask error\n");
+        }
     }
     else
     {
@@ -220,11 +195,7 @@ int main()
 void packet_handler(u_char *param, const struct pcap_pkthdr *header, const u_char *pkt_data)
 {
     struct tm *ltime;
-    char timestr[16];
-    ip_header *ih;
-    udp_header *uh;
-    u_int ip_len;
-    u_short sport,dport;
+    char timestr[16];    
     time_t local_tv_sec;
     Ethernet_Parser ethernetInformation(pkt_data,header->len);
     IP_Parser* ipInformation;
@@ -268,7 +239,7 @@ void packet_handler(u_char *param, const struct pcap_pkthdr *header, const u_cha
             tcpInformation=ipInformation->getTCP();
             src=tcpInformation->getSourceAddressAsString();
             dst=tcpInformation->getDestinationAddressAsString();
-            printf("TCP Port %s to Port %s (data len : %lld)\n",src,dst,tcpInformation->getDataLength());
+            printf("TCP Port %s to Port %s (data len : %llu)\n",src,dst,tcpInformation->getDataLength());
             delete[] src;
             delete[] dst;
             delete tcpInformation;
@@ -277,7 +248,7 @@ void packet_handler(u_char *param, const struct pcap_pkthdr *header, const u_cha
             udpInformation=ipInformation->getUDP();
             src=udpInformation->getSourceAddressAsString();
             dst=udpInformation->getDestinationAddressAsString();
-            printf("UDP Port %s to Port %s (data len : %lld)\n",src,dst,udpInformation->getDataLength());
+            printf("UDP Port %s to Port %s (data len : %llu)\n",src,dst,udpInformation->getDataLength());
             delete[] src;
             delete[] dst;
             delete udpInformation;
@@ -289,32 +260,5 @@ void packet_handler(u_char *param, const struct pcap_pkthdr *header, const u_cha
         printf("not IP\n");
     }
     printf("\n");
-
-    if(1==0){
-        /* retireve the position of the ip header */
-        ih = (ip_header *) (pkt_data +
-            14); //length of ethernet header
-
-        /* retireve the position of the udp header */
-        ip_len = (ih->ver_ihl & 0xf) * 4;
-        uh = (udp_header *) ((u_char*)ih + ip_len);
-
-        /* convert from network byte order to host byte order */
-        sport = ntohs( uh->sport );
-        dport = ntohs( uh->dport );
-
-        /* print ip addresses and udp ports */
-        printf("%d.%d.%d.%d.%d -> %d.%d.%d.%d.%d\n",
-            ih->saddr.byte1,
-            ih->saddr.byte2,
-            ih->saddr.byte3,
-            ih->saddr.byte4,
-            sport,
-            ih->daddr.byte1,
-            ih->daddr.byte2,
-            ih->daddr.byte3,
-            ih->daddr.byte4,
-            dport);
-    }
 
 }

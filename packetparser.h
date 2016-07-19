@@ -64,14 +64,14 @@ public :
      char* getSourceAddressAsString()
      {
         char* buffer = new char[128];
-        sprintf(buffer,"%d",ntohs(tcpHeader->th_sport));
+        sprintf(buffer,"%u",ntohs(tcpHeader->th_sport));
         return buffer;
      }
 
      char* getDestinationAddressAsString()
      {
          char* buffer = new char[128];
-         sprintf(buffer,"%d",ntohs(tcpHeader->th_dport));
+         sprintf(buffer,"%u",ntohs(tcpHeader->th_dport));
          return buffer;
      }
 };
@@ -103,14 +103,14 @@ public :
     char* getSourceAddressAsString()
     {
        char* buffer = new char[128];
-       sprintf(buffer,"%d",ntohs(udpHeader->uh_sport));
+       sprintf(buffer,"%u",ntohs(udpHeader->uh_sport));
        return buffer;
     }
 
     char* getDestinationAddressAsString()
     {
         char* buffer = new char[128];
-        sprintf(buffer,"%d",ntohs(udpHeader->uh_dport));
+        sprintf(buffer,"%u",ntohs(udpHeader->uh_dport));
         return buffer;
     }
 };
@@ -185,20 +185,20 @@ public :
     {
         if(getProtocol()==IPPROTO_TCP)
         {
-            return new TCP_Parser(((u_int8_t*)ipv4Header)+(*((u_int8_t*)ipv4Header) & 0xf) * 4,getDataLength());
+            if(ipv4Header)
+                return new TCP_Parser(((u_int8_t*)ipv4Header)+(*((u_int8_t*)ipv4Header) & 0xf) * 4,getDataLength());
         }
-        else
-            return NULL;
+        return NULL;
     }
 
     UDP_Parser* getUDP()
     {
         if(getProtocol()==IPPROTO_UDP)
         {
-            return new UDP_Parser(((u_int8_t*)ipv4Header)+(*((u_int8_t*)ipv4Header) & 0xf) * 4);
+            if(ipv4Header)
+                return new UDP_Parser(((u_int8_t*)ipv4Header)+(*((u_int8_t*)ipv4Header) & 0xf) * 4);
         }
-        else
-            return NULL;
+        return NULL;
     }
 
     u_int64_t getLength()
@@ -227,9 +227,9 @@ public :
         case 4:
             buffer=new char[20];
 #ifdef WIN32
-            sprintf(buffer,"%d.%d.%d.%d",ipv4Header->ip_dst.S_un.S_un_b.s_b1,ipv4Header->ip_dst.S_un.S_un_b.s_b2,ipv4Header->ip_dst.S_un.S_un_b.s_b3,ipv4Header->ip_dst.S_un.S_un_b.s_b4);
+            sprintf(buffer,"%u.%u.%u.%u",ipv4Header->ip_dst.S_un.S_un_b.s_b1,ipv4Header->ip_dst.S_un.S_un_b.s_b2,ipv4Header->ip_dst.S_un.S_un_b.s_b3,ipv4Header->ip_dst.S_un.S_un_b.s_b4);
 #else
-            sprintf(buffer,"%d.%d.%d.%d",((char*)&ipv4Header->ip_dst.s_addr)[0],((char*)&ipv4Header->ip_dst.s_addr)[1],((char*)&ipv4Header->ip_dst.s_addr)[2],((char*)&ipv4Header->ip_dst.s_addr)[3]);
+            sprintf(buffer,"%u.%u.%u.%u",((char*)&ipv4Header->ip_dst.s_addr)[0],((char*)&ipv4Header->ip_dst.s_addr)[1],((char*)&ipv4Header->ip_dst.s_addr)[2],((char*)&ipv4Header->ip_dst.s_addr)[3]);
 #endif
             break;
         case 6:
@@ -250,9 +250,9 @@ public :
         case 4:
             buffer=new char[20];
 #ifdef WIN32
-            sprintf(buffer,"%d.%d.%d.%d",ipv4Header->ip_src.S_un.S_un_b.s_b1,ipv4Header->ip_src.S_un.S_un_b.s_b2,ipv4Header->ip_src.S_un.S_un_b.s_b3,ipv4Header->ip_src.S_un.S_un_b.s_b4);
+            sprintf(buffer,"%u.%u.%u.%u",ipv4Header->ip_src.S_un.S_un_b.s_b1,ipv4Header->ip_src.S_un.S_un_b.s_b2,ipv4Header->ip_src.S_un.S_un_b.s_b3,ipv4Header->ip_src.S_un.S_un_b.s_b4);
 #else
-            sprintf(buffer,"%d.%d.%d.%d",((char*)&ipv4Header->ip_src.s_addr)[0],((char*)&ipv4Header->ip_src.s_addr)[1],((char*)&ipv4Header->ip_src.s_addr)[2],((char*)&ipv4Header->ip_src.s_addr)[3]);
+            sprintf(buffer,"%u.%u.%u.%u",((char*)&ipv4Header->ip_src.s_addr)[0],((char*)&ipv4Header->ip_src.s_addr)[1],((char*)&ipv4Header->ip_src.s_addr)[2],((char*)&ipv4Header->ip_src.s_addr)[3]);
 #endif
             break;
         case 6:
