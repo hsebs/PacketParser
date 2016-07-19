@@ -229,7 +229,7 @@ public :
 #ifdef WIN32
             sprintf(buffer,"%u.%u.%u.%u",ipv4Header->ip_dst.S_un.S_un_b.s_b1,ipv4Header->ip_dst.S_un.S_un_b.s_b2,ipv4Header->ip_dst.S_un.S_un_b.s_b3,ipv4Header->ip_dst.S_un.S_un_b.s_b4);
 #else
-            sprintf(buffer,"%u.%u.%u.%u",((char*)&ipv4Header->ip_dst.s_addr)[0],((char*)&ipv4Header->ip_dst.s_addr)[1],((char*)&ipv4Header->ip_dst.s_addr)[2],((char*)&ipv4Header->ip_dst.s_addr)[3]);
+            sprintf(buffer,"%u.%u.%u.%u",((unsigned char*)&ipv4Header->ip_dst.s_addr)[0],((unsigned char*)&ipv4Header->ip_dst.s_addr)[1],((unsigned char*)&ipv4Header->ip_dst.s_addr)[2],((unsigned char*)&ipv4Header->ip_dst.s_addr)[3]);
 #endif
             break;
         case 6:
@@ -252,7 +252,7 @@ public :
 #ifdef WIN32
             sprintf(buffer,"%u.%u.%u.%u",ipv4Header->ip_src.S_un.S_un_b.s_b1,ipv4Header->ip_src.S_un.S_un_b.s_b2,ipv4Header->ip_src.S_un.S_un_b.s_b3,ipv4Header->ip_src.S_un.S_un_b.s_b4);
 #else
-            sprintf(buffer,"%u.%u.%u.%u",((char*)&ipv4Header->ip_src.s_addr)[0],((char*)&ipv4Header->ip_src.s_addr)[1],((char*)&ipv4Header->ip_src.s_addr)[2],((char*)&ipv4Header->ip_src.s_addr)[3]);
+            sprintf(buffer,"%u.%u.%u.%u",((unsigned char*)&ipv4Header->ip_src.s_addr)[0],((unsigned char*)&ipv4Header->ip_src.s_addr)[1],((unsigned char*)&ipv4Header->ip_src.s_addr)[2],((unsigned char*)&ipv4Header->ip_src.s_addr)[3]);
 #endif
             break;
         case 6:
